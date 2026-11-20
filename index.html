@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0f1a">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Crew Rust</title>
+<style>
+:root{--bg:#0a0f1a;--card:#111a2b;--card2:#172238;--line:#233150;--text:#dfe6f2;--muted:#8794ad;--accent:#f5b74e;--ok:#4fd1a5;--warn:#f87171}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button{font:inherit;cursor:pointer}
+.num,.t,.big{font-variant-numeric:tabular-nums}
+header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;background:rgba(10,15,26,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:.3px;font-size:17px;display:flex;align-items:center;gap:8px}
+.brand i{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.clock{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px}
+.clock small{color:var(--muted);font-weight:600;font-size:12px;margin-right:6px;letter-spacing:.08em}
+main{padding:12px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.card h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px;font-weight:700}
+.row{display:flex;gap:10px;align-items:center}
+.timein{flex:1;display:flex;flex-direction:column;gap:4px}
+.timein label{font-size:12px;color:var(--muted)}
+input.t{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:12px 6px;font-size:28px;font-weight:700;text-align:center}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.arrow{color:var(--muted);font-size:20px;padding-top:18px}
+.summary{margin-top:12px;color:var(--muted);font-size:14px}
+.summary b{color:var(--text)}
+.seg{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:9px;font-weight:700}
+.seg button.on{background:var(--accent);color:#1d1406}
+.person{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:14px;padding:12px;margin-top:10px;background:var(--card2)}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pname{background:transparent;border:0;border-bottom:1px dashed var(--line);color:var(--text);font:inherit;font-size:19px;font-weight:800;width:130px;padding:2px 0;border-radius:0}
+.pname:focus{outline:0;border-bottom-color:var(--accent)}
+.field{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
+.field>span{color:var(--muted);font-size:14px}
+.field>span small{display:block;font-size:11px}
+.stepper{display:inline-flex;align-items:center;gap:4px}
+.stepper button{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:20px;line-height:1}
+.stepper button:active{background:var(--line)}
+.stepper input{width:66px;text-align:center;background:transparent;border:0;color:var(--text);font:inherit;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;padding:6px 0;border-radius:8px}
+.fixed{width:146px;text-align:center;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
+.link{background:none;border:0;color:var(--accent);font-size:13px;font-weight:600;padding:4px}
+.warn{color:var(--warn);font-size:13px;margin-top:8px}
+.olist{display:flex;flex-direction:column;gap:6px}
+.oitem{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 12px}
+.oitem .who{flex:1;font-weight:700}
+.oitem .who small{color:var(--muted);font-weight:500;margin-left:6px}
+.oitem .d{color:var(--muted);font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.ib{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px}
+.ib:disabled{opacity:.25}
+.hint{color:var(--muted);font-size:13px;margin:4px 0 10px}
+/* schedule */
+.hero{text-align:center;padding:18px 14px}
+.hero .lbl{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.hero .big{font-size:58px;font-weight:800;line-height:1.05;color:var(--accent);margin:6px 0 2px}
+.hero .sub{font-size:18px;font-weight:700}
+.hero .sub2{color:var(--muted);margin-top:4px}
+.hero .resting{margin-top:12px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card2);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:600}
+.tl{position:relative;margin-top:4px}
+.tlrow{display:flex;align-items:center;height:34px}
+.tlname{width:48px;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{position:relative;flex:1;height:26px;background:var(--card2);border-radius:7px}
+.bar{position:absolute;top:0;bottom:0;border-radius:7px;color:#121212;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap}
+.bar.done{opacity:.35}
+.nowl{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff;box-shadow:0 0 6px #fff;border-radius:2px}
+.axis{position:relative;height:18px;margin-left:48px;font-size:10px;color:var(--muted)}
+.axis span{position:absolute;transform:translateX(-50%);font-variant-numeric:tabular-nums}
+.blist{display:flex;flex-direction:column;gap:6px}
+.blk{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;padding:10px 12px}
+.blk .tm{font-variant-numeric:tabular-nums;font-size:17px;font-weight:600}
+.blk .tm b{color:var(--accent)}
+.blk .who{font-weight:800}
+.blk .who small{color:var(--muted);font-weight:500;margin-left:4px}
+.blk .du{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;font-size:13px}
+.blk.done{opacity:.45}
+.blk.active{box-shadow:0 0 0 1px var(--accent) inset;background:#1e2a44}
+.tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.foot{color:var(--muted);font-size:14px;margin-top:10px}
+.btn{border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:12px;padding:11px 14px;font-weight:700;width:100%;margin-top:10px}
+.btn.pri{background:var(--accent);color:#1d1406;border-color:var(--accent)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0}
+.sw span small{display:block;color:var(--muted);font-size:12px}
+.tog{width:52px;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--card2);position:relative;flex:none}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:.2s}
+.tog.on{background:var(--accent);border-color:var(--accent)}
+.tog.on::after{left:25px;background:#1d1406}
+.empty{text-align:center;color:var(--muted);padding:28px 14px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(10,15,26,.96);border-top:1px solid var(--line)}
+nav button{flex:1;border:0;border-radius:14px;padding:12px;background:var(--card);color:var(--muted);font-weight:800;font-size:15px}
+nav button.on{background:var(--accent);color:#1d1406}
+#alarm{position:fixed;inset:0;z-index:20;background:rgba(5,8,14,.94);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+#alarm.show{display:flex}
+#alarm .a1{font-size:40px;font-weight:800;color:var(--accent)}
+#alarm .a2{font-size:18px;margin:10px 0 28px;color:var(--text)}
+#alarm button{max-width:320px}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><i></i>Crew Rust</div>
+  <div class="clock"><small>UTC</small><span id="utc">--:--:--</span></div>
+</header>
+<main>
+  <div id="setup"></div>
+  <div id="sched" hidden></div>
+</main>
+<nav>
+  <button data-act="tab:setup" id="nav-setup">Instellen</button>
+  <button data-act="tab:schedule" id="nav-schedule">Schema</button>
+</nav>
+<div id="alarm"><div class="a1" id="a1"></div><div class="a2" id="a2"></div><button class="btn pri" data-act="dismiss">OK, gewekt</button></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, '0');
+const mod = (a, n) => ((a % n) + n) % n;
+const fmtClock = m => { m = mod(Math.round(m), 1440); return pad(Math.floor(m / 60)) + ':' + pad(m % 60); };
+const fmtDur = m => { m = Math.max(0, Math.round(m)); return Math.floor(m / 60) + ':' + pad(m % 60); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COLORS = ['#f5b74e', '#4fd1c5', '#a78bfa', '#f472b6'];
+const DEF_NAMES = {3: ['CPT', 'FO', 'SO'], 4: ['CPT', 'FO', 'FO2', 'SO']};
+const STORE = 'crewrust.v1';
+
+// Parse "22:00", "2200", "22.00", "22" -> minutes
+function parseHM(str, maxH = 23) {
+  let s = String(str ?? '').trim().replace(/[.,h ]/g, ':');
+  let h, m;
+  if (/^\d{1,2}:\d{1,2}$/.test(s)) [h, m] = s.split(':').map(Number);
+  else if (/^\d{3,4}$/.test(s)) { h = +s.slice(0, -2); m = +s.slice(-2); }
+  else if (/^\d{1,2}$/.test(s)) { h = +s; m = 0; }
+  else return null;
+  if (h > maxH || m > 59) return null;
+  return h * 60 + m;
+}
+
+function defCfg(n) { return {people: DEF_NAMES[n].map(name => ({name, nparts: 1, total: null, custom: null})), order: null}; }
+function defaults() {
+  return {start: '', end: '', crew: 3, cfg: {3: defCfg(3), 4: defCfg(4)}, notify: {on: false, before: 0}, wake: false, fired: {}, tab: 'setup'};
+}
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE));
+    if (!s) return defaults();
+    const d = defaults();
+    return Object.assign(d, s, {cfg: Object.assign(d.cfg, s.cfg || {}), notify: Object.assign(d.notify, s.notify || {})});
+  } catch (e) { return defaults(); }
+}
+let state = load();
+let calc = null;
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+
+// ---------- calculation ----------
+function splitParts(total, n, custom) {
+  if (n === 1) return [total];
+  let first;
+  if (custom && custom.length === n - 1) first = custom.slice();
+  else { const b = Math.floor(total / n / 5) * 5; first = Array(n - 1).fill(b); }
+  return [...first, total - first.reduce((a, b) => a + b, 0)];
+}
+function autoOrder(people) {
+  const o = [], mx = Math.max(...people.map(p => p.nparts));
+  for (let r = 0; r < mx; r++) people.forEach((p, i) => { if (p.nparts > r) o.push(i + '-' + r); });
+  return o;
+}
+function sameSet(a, b) { return a.length === b.length && [...a].sort().join() === [...b].sort().join(); }
+
+function compute() {
+  const n = state.crew, k = n === 4 ? 2 : 1, cfg = state.cfg[n];
+  const s = parseHM(state.start), e = parseHM(state.end);
+  if (s == null || e == null) return {ok: false, n, k, msg: 'Vul het begin en eind van de rust in (UTC).'};
+  const T = mod(e - s, 1440);
+  if (T === 0) return {ok: false, n, k, msg: 'Begin en eind zijn gelijk.'};
+  const maxPer = Math.floor(T * k / n / 5) * 5;
+  const people = cfg.people.map((p, i) => {
+    const total = p.total ?? maxPer;
+    const parts = splitParts(total, p.nparts, p.custom);
+    return {...p, i, total, parts, auto: p.total == null, bad: parts.some(x => x < 5), name: p.name || ('Persoon ' + (i + 1))};
+  });
+  const keys = autoOrder(people);
+  const order = cfg.order && sameSet(cfg.order, keys) ? cfg.order : keys;
+  const beds = Array(k).fill(0), last = {}, items = [];
+  for (const key of order) {
+    const [pi, pa] = key.split('-').map(Number);
+    const p = people[pi], dur = p.parts[pa];
+    if (!(dur > 0)) continue;
+    let best = 0, bs = Infinity;
+    for (let b = 0; b < k; b++) { const c = Math.max(beds[b], last[pi] ?? 0); if (c < bs) { bs = c; best = b; } }
+    beds[best] = bs + dur; last[pi] = bs + dur;
+    items.push({key, pi, pa, np: p.nparts, name: p.name, st: bs, en: bs + dur, bed: best, color: COLORS[pi]});
+  }
+  const endAll = items.length ? Math.max(...items.map(x => x.en)) : 0;
+  const warns = [];
+  if (endAll > T) warns.push(`Het schema loopt ${fmtDur(endAll - T)} over het eind van de rust (${fmtClock(e)}).`);
+  people.forEach(p => { if (p.bad) warns.push(`${p.name}: een deel is korter dan 0:05.`); });
+  return {ok: true, n, k, s, e, T, maxPer, people, order, items, endAll, rest: T - endAll, warns};
+}
+
+// Absolute start time (ms) of the current or next rest window
+function anchor(c) {
+  const now = Date.now(), d = new Date(now);
+  const base = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) + c.s * 60000;
+  const span = Math.max(c.T, c.endAll) * 60000;
+  for (const off of [-1, 0, 1]) { const st = base + off * 864e5; if (st + span + 3600e3 > now) return st; }
+  return base + 864e5;
+}
+
+// ---------- render: setup ----------
+function stepper(act, val, field) {
+  return `<div class="stepper"><button data-act="${act}:-5" aria-label="5 minuten minder">−</button><input data-f="${field}" inputmode="numeric" value="${fmtDur(val)}"><button data-act="${act}:5" aria-label="5 minuten meer">+</button></div>`;
+}
+function renderSetup(c) {
+  const n = state.crew, cfg = state.cfg[n];
+  let h = `<section class="card"><h2>Rustperiode · UTC</h2>
+    <div class="row">
+      <div class="timein"><label for="start">Begin</label><input class="t" id="start" data-f="start" inputmode="numeric" placeholder="00:00" autocomplete="off" value="${esc(state.start)}"></div>
+      <div class="arrow">→</div>
+      <div class="timein"><label for="end">Eind</label><input class="t" id="end" data-f="end" inputmode="numeric" placeholder="00:00" autocomplete="off" value="${esc(state.end)}"></div>
+    </div>
+    <div class="summary">${c.ok ? `Totaal <b>${fmtDur(c.T)}</b> · max per persoon <b>${fmtDur(c.maxPer)}</b>${c.k === 2 ? ' · 2 tegelijk in rust' : ''}` : esc(c.msg)}</div>
+  </section>`;
+
+  h += `<section class="card"><h2>Bemanning</h2>
+    <div class="field" style="margin-top:0"><span>Aantal personen</span>
+      <div class="seg"><button data-act="crew:3" class="${n === 3 ? 'on' : ''}">3</button><button data-act="crew:4" class="${n === 4 ? 'on' : ''}">4</button></div></div>`;
+  cfg.people.forEach((p, i) => {
+    const cp = c.ok ? c.people[i] : null;
+    h += `<div class="person" style="--c:${COLORS[i]}">
+      <div class="phead"><input class="pname" data-f="name:${i}" value="${esc(p.name)}" maxlength="8" aria-label="Naam">
+        <div class="seg">${[1, 2, 3].map(x => `<button data-act="parts:${i}:${x}" class="${p.nparts === x ? 'on' : ''}">${x === 1 ? '1×' : x + '×'}</button>`).join('')}</div></div>`;
+    if (cp) {
+      h += `<div class="field"><span>Totale rust<small>${cp.auto ? 'automatisch (max)' : `<button class="link" data-act="totauto:${i}">↺ terug naar max</button>`}</small></span>${stepper('tot:' + i, cp.total, 'tot:' + i)}</div>`;
+      if (p.nparts > 1) {
+        cp.parts.forEach((v, j) => {
+          const lastp = j === p.nparts - 1;
+          h += `<div class="field"><span>Deel ${j + 1}${lastp ? '<small>rest van totaal</small>' : ''}</span>${lastp ? `<div class="fixed">${fmtDur(v)}</div>` : stepper(`part:${i}:${j}`, v, `part:${i}:${j}`)}</div>`;
+        });
+      }
+      if (cp.bad) h += `<div class="warn">Een deel is te kort, pas de verdeling aan.</div>`;
+    }
+    h += `</div>`;
+  });
+  h += `</section>`;
+
+  if (c.ok) {
+    h += `<section class="card"><h2>Volgorde</h2><div class="hint">${c.k === 2 ? 'Blokken worden in deze volgorde over 2 rustplekken verdeeld.' : 'Blokken volgen elkaar in deze volgorde op.'}</div><div class="olist">`;
+    c.order.forEach((key, idx) => {
+      const [pi, pa] = key.split('-').map(Number), p = c.people[pi];
+      h += `<div class="oitem"><span class="who"><span class="dot" style="background:${COLORS[pi]}"></span>${esc(p.name)}${p.nparts > 1 ? `<small>deel ${pa + 1}/${p.nparts}</small>` : ''}</span>
+        <span class="d">${fmtDur(p.parts[pa])}</span>
+        <button class="ib" data-act="up:${idx}" ${idx === 0 ? 'disabled' : ''} aria-label="Omhoog">▲</button>
+        <button class="ib" data-act="down:${idx}" ${idx === c.order.length - 1 ? 'disabled' : ''} aria-label="Omlaag">▼</button></div>`;
+    });
+    h += `</div>${state.cfg[n].order ? `<button class="btn" data-act="orderreset">Standaardvolgorde</button>` : ''}
+      <button class="btn pri" data-act="tab:schedule">Bekijk schema</button></section>`;
+  }
+  $('#setup').innerHTML = h;
+}
+
+// ---------- render: schedule ----------
+function notifCard() {
+  const nt = state.notify;
+  return `<section class="card"><h2>Meldingen</h2>
+    <div class="sw"><span>Melding bij wekmoment<small>Geluid, trillen en een melding</small></span><button class="tog ${nt.on ? 'on' : ''}" data-act="notif" aria-label="Meldingen aan/uit"></button></div>
+    ${nt.on ? `<div class="field"><span>Moment</span><div class="seg">${[0, 5, 10].map(b => `<button data-act="before:${b}" class="${nt.before === b ? 'on' : ''}">${b === 0 ? 'Op tijd' : '−' + b + ' min'}</button>`).join('')}</div></div>` : ''}
+    <div class="sw"><span>Scherm aan houden<small>Nodig voor betrouwbare meldingen</small></span><button class="tog ${state.wake ? 'on' : ''}" data-act="wake" aria-label="Scherm aan houden"></button></div>
+    <button class="btn" data-act="test">Test melding</button>
+    <div class="hint" style="margin-top:10px">Meldingen werken betrouwbaar zolang de app open op het scherm staat. Laat de telefoon met de app open liggen en zet "Scherm aan houden" aan.</div>
+  </section>`;
+}
+function renderSchedule(c) {
+  const el = $('#sched');
+  if (!c.ok) { el.innerHTML = `<section class="card empty">${esc(c.msg)}<button class="btn pri" data-act="tab:setup">Naar instellen</button></section>` + notifCard(); return; }
+  const a = anchor(c), nowOff = (Date.now() - a) / 60000;
+  const items = [...c.items].sort((x, y) => x.st - y.st || x.bed - y.bed);
+  const active = items.filter(x => x.st <= nowOff && nowOff < x.en);
+  const next = items.filter(x => x.en > nowOff).sort((x, y) => x.en - y.en)[0];
+  const span = Math.max(c.T, c.endAll);
+
+  let hero;
+  if (nowOff < 0) {
+    hero = `<div class="lbl">Rust begint om</div><div class="big">${fmtClock(c.s)}</div><div class="sub2">over ${fmtDur(Math.ceil(-nowOff))} · eerst: ${esc(items.filter(x => x.st === 0).map(x => x.name).join(' + '))}</div>`;
+  } else if (!next) {
+    hero = `<div class="lbl">Rust afgelopen</div><div class="big">${fmtClock(c.s + c.endAll)}</div><div class="sub2">Alle rustblokken zijn voorbij</div>`;
+  } else {
+    const after = items.filter(x => x.st === next.en && x.pi !== next.pi).map(x => x.name);
+    hero = `<div class="lbl">Volgende wekmoment</div><div class="big">${fmtClock(c.s + next.en)}</div>
+      <div class="sub">Wek ${esc(next.name)}</div>
+      <div class="sub2">over ${fmtDur(Math.ceil(next.en - nowOff))}${after.length ? ' · daarna rust: ' + esc(after.join(' + ')) : ''}</div>`;
+  }
+  if (active.length) hero += `<div class="resting">${active.map(x => `<span class="chip"><span class="dot" style="background:${x.color}"></span>${esc(x.name)} rust tot ${fmtClock(c.s + x.en)}</span>`).join('')}</div>`;
+
+  // timeline
+  let tl = '<div class="tl">';
+  const showNow = nowOff >= 0 && nowOff <= span;
+  c.people.forEach((p, pi) => {
+    tl += `<div class="tlrow"><div class="tlname" style="color:${COLORS[pi]}">${esc(p.name)}</div><div class="track">`;
+    items.filter(x => x.pi === pi).forEach(x => {
+      tl += `<div class="bar ${x.en <= nowOff ? 'done' : ''}" style="left:${x.st / span * 100}%;width:${(x.en - x.st) / span * 100}%;background:${x.color}">${(x.en - x.st) / span > 0.12 ? fmtDur(x.en - x.st) : ''}</div>`;
+    });
+    if (showNow) tl += `<div class="nowl" style="left:${nowOff / span * 100}%"></div>`;
+    tl += `</div></div>`;
+  });
+  const step = span > 600 ? 180 : span > 300 ? 120 : 60;
+  let ax = '';
+  for (let off = mod(-c.s, step); off <= span; off += step) {
+    if (off < span * 0.06 || off > span * 0.94) continue;
+    ax += `<span style="left:${off / span * 100}%">${fmtClock(c.s + off)}</span>`;
+  }
+  tl += `<div class="axis"><span style="left:0;transform:none">${fmtClock(c.s)}</span>${ax}<span style="right:0;left:auto;transform:none">${fmtClock(c.s + span)}</span></div></div>`;
+
+  let list = '<div class="blist">';
+  items.forEach(x => {
+    const st = x.en <= nowOff ? 'done' : x.st <= nowOff ? 'active' : '';
+    list += `<div class="blk ${st}" style="--c:${x.color}">
+      <div class="tm">${fmtClock(c.s + x.st)} – <b>${fmtClock(c.s + x.en)}</b></div>
+      <div class="who">${esc(x.name)}${x.np > 1 ? `<small>deel ${x.pa + 1}/${x.np}</small>` : ''}${st === 'active' ? ' <span class="tag">· rust nu</span>' : ''}</div>
+      <div class="du">${fmtDur(x.en - x.st)}</div></div>`;
+  });
+  list += '</div>';
+
+  let foot = `<div class="foot">Rustperiode ${fmtClock(c.s)} – ${fmtClock(c.e)} UTC (${fmtDur(c.T)})${c.rest > 0 ? ` · restant ${fmtDur(c.rest)} aan het eind` : ''}</div>`;
+  c.warns.forEach(w => foot += `<div class="warn">⚠ ${esc(w)}</div>`);
+
+  el.innerHTML = `<section class="card hero">${hero}</section>
+    <section class="card"><h2>Tijdlijn · UTC</h2>${tl}</section>
+    <section class="card"><h2>Schema · UTC</h2>${list}${foot}<button class="btn" data-act="copy">Kopieer schema als tekst</button></section>` + notifCard();
+}
+
+function render() {
+  calc = compute();
+  $('#setup').hidden = state.tab !== 'setup';
+  $('#sched').hidden = state.tab !== 'schedule';
+  $('#nav-setup').classList.toggle('on', state.tab === 'setup');
+  $('#nav-schedule').classList.toggle('on', state.tab === 'schedule');
+  renderSetup(calc);
+  renderSchedule(calc);
+  save();
+}
+
+// ---------- interactions ----------
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1800); }
+function cfgNow() { return state.cfg[state.crew]; }
+function setTotal(i, v) {
+  const p = cfgNow().people[i], c = calc;
+  v = Math.max(5, Math.min(c.T, Math.round(v / 5) * 5));
+  p.total = v === c.maxPer ? null : v;
+  if (p.custom && v - p.custom.reduce((a, b) => a + b, 0) < 5) p.custom = null;
+}
+function setPart(i, j, v) {
+  const p = cfgNow().people[i], cp = calc.people[i];
+  const custom = cp.parts.slice(0, -1);
+  v = Math.max(5, Math.round(v / 5) * 5);
+  const others = custom.reduce((a, b, idx) => a + (idx === j ? 0 : b), 0);
+  if (cp.total - others - v < 5) { toast('Laatste deel moet minstens 0:05 blijven'); v = cp.total - others - 5; if (v < 5) return; }
+  custom[j] = v; p.custom = custom;
+}
+
+document.addEventListener('click', ev => {
+  unlockAudio();
+  const b = ev.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const [act, x, y] = b.dataset.act.split(':');
+  const cfg = cfgNow();
+  switch (act) {
+    case 'tab': state.tab = x; window.scrollTo(0, 0); break;
+    case 'crew': state.crew = +x; break;
+    case 'parts': cfg.people[+x].nparts = +y; cfg.people[+x].custom = null; cfg.order = null; break;
+    case 'tot': if (calc.ok) setTotal(+x, calc.people[+x].total + +y); break;
+    case 'totauto': cfg.people[+x].total = null; cfg.people[+x].custom = null; break;
+    case 'part': { const [, i, j, d] = b.dataset.act.split(':'); if (calc.ok) setPart(+i, +j, calc.people[+i].parts[+j] + +d); break; }
+    case 'up': case 'down': {
+      const o = calc.order.slice(), i = +x, t = act === 'up' ? i - 1 : i + 1;
+      [o[i], o[t]] = [o[t], o[i]]; cfg.order = o; break;
+    }
+    case 'orderreset': cfg.order = null; break;
+    case 'notif': toggleNotif(); return;
+    case 'before': state.notify.before = +x; break;
+    case 'wake': state.wake = !state.wake; applyWake(); break;
+    case 'test': fireAlarm('Wek ' + (calc.ok ? calc.people[0].name : 'CPT'), 'Dit is een testmelding'); return;
+    case 'copy': copySchedule(); return;
+    case 'dismiss': stopAlarm(); return;
+  }
+  render();
+});
+
+document.addEventListener('input', ev => {
+  const el = ev.target;
+  if ((el.dataset.f === 'start' || el.dataset.f === 'end') && /^\d{4}$/.test(el.value)) {
+    const m = parseHM(el.value); if (m != null) { el.value = fmtClock(m); el.blur(); }
+  }
+});
+document.addEventListener('change', ev => {
+  const el = ev.target, f = el.dataset.f; if (!f) return;
+  const [k, i, j] = f.split(':');
+  if (k === 'start' || k === 'end') {
+    if (el.value.trim() === '') state[k] = '';
+    else { const m = parseHM(el.value); if (m == null) { toast('Ongeldige tijd, gebruik 00:00'); } else state[k] = fmtClock(m); }
+  } else if (k === 'name') {
+    cfgNow().people[+i].name = el.value.trim().slice(0, 8) || DEF_NAMES[state.crew][+i];
+  } else if (k === 'tot' || k === 'part') {
+    const m = parseHM(el.value, 23);
+    if (m == null || !calc.ok) toast('Ongeldige duur, gebruik 0:00');
+    else if (k === 'tot') setTotal(+i, m); else setPart(+i, +j, m);
+  }
+  render();
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target.matches('input')) ev.target.blur(); });
+
+// ---------- notifications ----------
+let actx = null, beepTimer = null, swReg = null;
+function unlockAudio() {
+  try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) {}
+}
+function beep() {
+  if (!actx) return;
+  const t = actx.currentTime;
+  [0, 0.25, 0.5].forEach(d => {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.4, t + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.18);
+    o.connect(g).connect(actx.destination); o.start(t + d); o.stop(t + d + 0.2);
+  });
+}
+async function toggleNotif() {
+  if (!state.notify.on) {
+    if ('Notification' in window && Notification.permission === 'default') { try { await Notification.requestPermission(); } catch (e) {} }
+    state.notify.on = true;
+    if (!state.wake) { state.wake = true; applyWake(); }
+    toast(('Notification' in window && Notification.permission === 'granted') ? 'Meldingen aan' : 'Meldingen aan (alleen in de app)');
+  } else state.notify.on = false;
+  render();
+}
+function fireAlarm(title, body) {
+  $('#a1').textContent = title; $('#a2').textContent = body; $('#alarm').classList.add('show');
+  beep(); clearInterval(beepTimer); let n = 0;
+  beepTimer = setInterval(() => { beep(); if (++n > 40) clearInterval(beepTimer); }, 1500);
+  if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 800]);
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const opt = {body, tag: 'crewrust', renotify: true, requireInteraction: true, vibrate: [400, 200, 400], icon: 'icon-192.png'};
+    if (swReg) swReg.showNotification(title, opt).catch(() => {});
+    else try { new Notification(title, opt); } catch (e) {}
+  }
+}
+function stopAlarm() { clearInterval(beepTimer); $('#alarm').classList.remove('show'); if (navigator.vibrate) navigator.vibrate(0); }
+function checkAlarms() {
+  const c = calc; if (!c || !c.ok || !state.notify.on) return;
+  const a = anchor(c), now = Date.now(), before = state.notify.before;
+  for (const it of c.items) {
+    const t = a + it.en * 60000, at = t - before * 60000;
+    const id = a + '|' + it.key + '|' + it.en + '|' + before;
+    if (now >= at && now < at + 5 * 60000 && !state.fired[id]) {
+      state.fired[id] = Date.now();
+      const after = c.items.filter(x => x.st === it.en && x.pi !== it.pi).map(x => x.name);
+      fireAlarm(before ? `Over ${before} min: wek ${it.name}` : `Wek ${it.name}`,
+        `Rust eindigt ${fmtClock(c.s + it.en)} UTC${after.length ? ' · daarna rust: ' + after.join(' + ') : ''}`);
+      const ks = Object.keys(state.fired); if (ks.length > 100) ks.slice(0, ks.length - 100).forEach(k => delete state.fired[k]);
+      save();
+    }
+  }
+}
+let wakeLock = null;
+async function applyWake() {
+  try {
+    if (state.wake && 'wakeLock' in navigator && document.visibilityState === 'visible') { if (!wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } }
+    else if (!state.wake && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { applyWake(); render(); checkAlarms(); } });
+
+function copySchedule() {
+  const c = calc; if (!c.ok) return;
+  const lines = [`Rust ${fmtClock(c.s)}–${fmtClock(c.e)} UTC`];
+  [...c.items].sort((x, y) => x.st - y.st || x.bed - y.bed).forEach(x => lines.push(`${fmtClock(c.s + x.st)}–${fmtClock(c.s + x.en)}  ${x.name}${x.np > 1 ? ` (${x.pa + 1}/${x.np})` : ''}  ${fmtDur(x.en - x.st)}`));
+  const txt = lines.join('\n');
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Schema gekopieerd'), () => {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Schema gekopieerd'); } catch (e) { toast('Kopiëren lukte niet'); } ta.remove();
+  });
+}
+
+// ---------- clock loop ----------
+let lastMin = -1;
+function tick() {
+  const d = new Date();
+  $('#utc').textContent = pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds());
+  if (d.getUTCMinutes() !== lastMin) { lastMin = d.getUTCMinutes(); if (calc) renderSchedule(calc); }
+  if (d.getUTCSeconds() % 5 === 0) checkAlarms();
+}
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').then(r => swReg = r).catch(() => {});
+}
+render();
+applyWake();
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
